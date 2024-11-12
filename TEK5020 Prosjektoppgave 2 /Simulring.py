@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
 import matplotlib.pyplot as plt
 
 # Load images
@@ -24,9 +24,9 @@ def get_rgb_data(image, regions):
 # Define regions for training data as (x, y, width, height)
 # Adjust these regions as needed for better segmentation
 regions = {
-    0: (2000, 400, 900, 900),  # Region for red folder
-    1: (400, 900, 900, 900),  # Region for blue folder
-    2: (10, 10, 750, 750)     # Region for background
+    0: (2000, 400, 100, 100),  # Region for red folder
+    1: (700, 900, 100, 100),  # Region for blue folder
+    2: (10, 10, 50, 50)     # Region for background
 }
 
 # Get training data from the training image
@@ -36,8 +36,8 @@ train_data, train_labels = get_rgb_data(train_image, regions)
 train_data_normalized = train_data / (train_data.sum(axis=1, keepdims=True) + 1e-6)
 
 # Train an SVM classifier
-svm = SVC(kernel='linear')  # Try 'rbf' kernel if needed
-svm.fit(train_data_normalized, train_labels)
+knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(train_data_normalized, train_labels)
 
 # Function to classify each pixel in the test image
 def segment_image(image, classifier):
@@ -54,7 +54,8 @@ def segment_image(image, classifier):
     return segmented_image
 
 # Segment the test image
-segmented_test_image = segment_image(test_image, svm)
+segmented_test_image_1 = segment_image(test_image, knn)
+segmented_test_image_2 = segment_image(train_image, knn)
 
 # Display the original and segmented images
 plt.figure(figsize=(10, 5))
@@ -64,7 +65,19 @@ plt.imshow(cv2.cvtColor(test_image, cv2.COLOR_BGR2RGB))
 
 plt.subplot(1, 2, 2)
 plt.title("Segmented Image")
-plt.imshow(segmented_test_image, cmap='viridis')
+plt.imshow(segmented_test_image_1, cmap='viridis')
+
+plt.show()
+
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.title("Original Image")
+plt.imshow(cv2.cvtColor(train_image, cv2.COLOR_BGR2RGB))
+
+plt.subplot(1, 2, 2)
+plt.title("Segmented Image")
+plt.imshow(segmented_test_image_2, cmap='viridis')
+
 
 plt.show()
 
